@@ -83,6 +83,11 @@ class AdminUserController extends Controller
 
         // Registrar auditoría de activación/desactivación
         if ($oldIsActive !== $user->is_active) {
+            // Al desactivar una cuenta se revocan sus sesiones abiertas
+            if (!$user->is_active) {
+                $user->tokens()->delete();
+            }
+
             AuditLog::create([
                 'user_id' => $currentUser->id,
                 'action' => $user->is_active ? 'USER_ACTIVATED' : 'USER_DEACTIVATED',
