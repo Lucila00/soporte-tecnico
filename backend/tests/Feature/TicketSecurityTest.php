@@ -229,4 +229,25 @@ class TicketSecurityTest extends TestCase
         $this->app['auth']->forgetGuards();
         $this->withToken($token)->getJson('/api/user')->assertStatus(401);
     }
+
+    public function test_comment_longer_than_limit_is_rejected(): void
+    {
+        $response = $this->actingAs($this->user1, 'sanctum')
+            ->postJson("/api/tickets/{$this->ticketUser1->id}/comments", [
+                'comment' => str_repeat('a', 2001),
+            ]);
+
+        $response->assertStatus(422)->assertJsonValidationErrors('comment');
+    }
+
+    public function test_cors_only_allows_configured_frontend_origin(): void
+    {
+        $allowed = $this->withHeaders(['Origin' => 'http://localhost:4200'])->getJson('/api/tickets');
+        $allowed->assertHeader('Access-Control-Allow-Origin', 'http://localhost:4200');
+
+        $foreign = $this->withHeaders(['Origin' => 'https://sitio-malicioso.example'])->getJson('/api/tickets');
+        // El navegador bloquea la respuesta si el origen permitido no coincide con el solicitante
+        $this->assertNotSame('https://sitio-malicioso.example', $foreign->headers->get('Access-Control-Allow-Origin'));
+        $this->assertNotSame('*', $foreign->headers->get('Access-Control-Allow-Origin'));
+    }
 }

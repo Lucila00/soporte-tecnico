@@ -20,7 +20,7 @@ class UpdateTicketRequest extends FormRequest
         if ($user->isUser()) {
             return [
                 'title' => ['sometimes', 'required', 'string', 'min:5', 'max:150'],
-                'description' => ['sometimes', 'required', 'string', 'min:10'],
+                'description' => ['sometimes', 'required', 'string', 'min:10', 'max:5000'],
             ];
         }
 

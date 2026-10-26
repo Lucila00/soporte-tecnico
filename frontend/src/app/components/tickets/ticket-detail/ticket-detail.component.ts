@@ -99,7 +99,7 @@ import { User } from '../../../models/user.model';
                 </div>
                 <div class="form-group">
                   <label class="form-label">Descripción</label>
-                  <textarea [(ngModel)]="editDescription" rows="4" class="form-control"></textarea>
+                  <textarea [(ngModel)]="editDescription" rows="4" maxlength="5000" class="form-control"></textarea>
                 </div>
                 <div class="flex gap-2">
                   <button (click)="saveEdit()" class="btn btn-sm btn-primary">Guardar Cambios</button>
@@ -181,6 +181,7 @@ import { User } from '../../../models/user.model';
               <label class="form-label">Agregar Observación o Respuesta:</label>
               <textarea
                 [(ngModel)]="newComment"
+                maxlength="2000"
                 rows="3"
                 placeholder="Escribe tu observación técnica o respuesta al usuario..."
                 class="form-control"

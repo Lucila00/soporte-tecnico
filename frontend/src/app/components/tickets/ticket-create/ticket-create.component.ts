@@ -74,6 +74,7 @@ import { TicketService } from '../../../services/ticket.service';
               name="description"
               required
               minlength="10"
+              maxlength="5000"
               rows="6"
               placeholder="Explica qué estaba sucediendo, mensajes de error que aparecieron en pantalla o pasos para reproducir el fallo..."
               class="form-control"

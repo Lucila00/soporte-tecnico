@@ -18,7 +18,8 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'],
+    // Solo el frontend Angular puede consumir la API (lista separada por comas)
+    'allowed_origins' => array_map('trim', explode(',', env('FRONTEND_URL', 'http://localhost:4200'))),
 
     'allowed_origins_patterns' => [],
 

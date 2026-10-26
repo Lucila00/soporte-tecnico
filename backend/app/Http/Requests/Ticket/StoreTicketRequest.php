@@ -15,7 +15,7 @@ class StoreTicketRequest extends FormRequest
     {
         return [
             'title' => ['required', 'string', 'min:5', 'max:150'],
-            'description' => ['required', 'string', 'min:10'],
+            'description' => ['required', 'string', 'min:10', 'max:5000'],
             'category' => ['required', 'string', 'in:hardware,software,red,acceso,otro'],
             'priority' => ['required', 'string', 'in:baja,media,alta,critica'],
         ];
@@ -29,6 +29,7 @@ class StoreTicketRequest extends FormRequest
             'title.max' => 'El título no puede exceder los 150 caracteres.',
             'description.required' => 'La descripción del problema es obligatoria.',
             'description.min' => 'Por favor detalla el problema con al menos 10 caracteres.',
+            'description.max' => 'La descripción no puede exceder los 5000 caracteres.',
             'category.required' => 'Debe seleccionar una categoría válida.',
             'category.in' => 'La categoría seleccionada no es válida.',
             'priority.required' => 'Debe seleccionar un nivel de prioridad.',
