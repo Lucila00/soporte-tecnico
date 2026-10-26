@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Alias de middlewares personalizados
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
+            'active' => \App\Http\Middleware\EnsureUserIsActive::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

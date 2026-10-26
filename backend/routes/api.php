@@ -15,8 +15,8 @@ use Illuminate\Support\Facades\Route;
 // 1. Autenticación Pública
 Route::post('/login', [AuthController::class, 'login']);
 
-// 2. Rutas Protegidas (Requieren autenticación activa)
-Route::middleware('auth:sanctum')->group(function () {
+// 2. Rutas Protegidas (Requieren autenticación y cuenta activa)
+Route::middleware(['auth:sanctum', 'active'])->group(function () {
 
     // Perfil y Sesión
     Route::get('/user', [AuthController::class, 'user']);

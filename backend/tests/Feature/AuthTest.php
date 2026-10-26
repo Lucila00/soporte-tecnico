@@ -5,13 +5,13 @@ namespace Tests\Feature;
 use App\Models\AuditLog;
 use App\Models\Role;
 use App\Models\User;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class AuthTest extends TestCase
 {
-    use DatabaseTransactions;
+    use RefreshDatabase;
     protected function setUp(): void
     {
         parent::setUp();

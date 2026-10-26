@@ -11,7 +11,9 @@ use App\Models\Ticket;
 use App\Models\TicketComment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 
 class TicketController extends Controller
 {
@@ -67,22 +69,25 @@ class TicketController extends Controller
     {
         $user = $request->user();
 
-        // Generar código correlativo único (ej: TCK-2026-0005)
-        $year = date('Y');
-        $lastTicket = Ticket::whereYear('created_at', $year)->latest('id')->first();
-        $nextNumber = $lastTicket ? ($lastTicket->id + 1) : 1;
-        $ticketCode = sprintf('TCK-%s-%04d', $year, $nextNumber);
+        // El código se deriva del ID autoincremental (ej: TCK-2026-0005), que es único
+        // incluso con solicitudes concurrentes. Se usa un código temporal hasta conocer el ID.
+        $ticket = DB::transaction(function () use ($request, $user) {
+            $ticket = Ticket::create([
+                'ticket_code' => 'TMP-' . Str::random(20),
+                'user_id' => $user->id,
+                'assigned_to' => null,
+                'title' => $request->input('title'),
+                'description' => $request->input('description'),
+                'category' => $request->input('category'),
+                'priority' => $request->input('priority'),
+                'status' => 'abierto',
+            ]);
 
-        $ticket = Ticket::create([
-            'ticket_code' => $ticketCode,
-            'user_id' => $user->id,
-            'assigned_to' => null,
-            'title' => $request->input('title'),
-            'description' => $request->input('description'),
-            'category' => $request->input('category'),
-            'priority' => $request->input('priority'),
-            'status' => 'abierto',
-        ]);
+            $ticket->ticket_code = sprintf('TCK-%s-%04d', $ticket->created_at->format('Y'), $ticket->id);
+            $ticket->save();
+
+            return $ticket;
+        });
 
         // Registrar en auditoría
         AuditLog::create([

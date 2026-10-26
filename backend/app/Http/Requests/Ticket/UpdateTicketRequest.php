@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Ticket;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateTicketRequest extends FormRequest
 {
@@ -27,7 +28,17 @@ class UpdateTicketRequest extends FormRequest
         $rules = [
             'status' => ['sometimes', 'required', 'in:abierto,en_proceso,resuelto,cerrado'],
             'priority' => ['sometimes', 'required', 'in:baja,media,alta,critica'],
-            'assigned_to' => ['sometimes', 'nullable', 'exists:users,id'],
+            // Solo se puede asignar a personal de soporte (operador o administrador) con cuenta activa
+            'assigned_to' => [
+                'sometimes',
+                'nullable',
+                Rule::exists('users', 'id')->where(fn ($q) => $q
+                    ->where('is_active', true)
+                    ->whereIn('role_id', fn ($sub) => $sub
+                        ->select('id')
+                        ->from('roles')
+                        ->whereIn('name', ['operador', 'administrador']))),
+            ],
         ];
 
         // 3. Administrador adicionalmente puede modificar título, descripción y categoría
@@ -45,7 +56,7 @@ class UpdateTicketRequest extends FormRequest
         return [
             'status.in' => 'El estado proporcionado no es válido.',
             'priority.in' => 'La prioridad proporcionada no es válida.',
-            'assigned_to.exists' => 'El operador seleccionado no existe en el sistema.',
+            'assigned_to.exists' => 'El técnico seleccionado no existe, no está activo o no es personal de soporte.',
         ];
     }
 }

@@ -6,12 +6,12 @@ use App\Models\AuditLog;
 use App\Models\Role;
 use App\Models\Ticket;
 use App\Models\User;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class TicketSecurityTest extends TestCase
 {
-    use DatabaseTransactions;
+    use RefreshDatabase;
 
     protected User $admin;
     protected User $operator;
@@ -23,6 +23,9 @@ class TicketSecurityTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Datos de demostración (roles, usuarios y tickets) dentro de la transacción de cada prueba
+        $this->seed();
 
         $this->admin = User::where('email', 'admin@soporte.local')->first();
         $this->operator = User::where('email', 'operador@soporte.local')->first();
@@ -173,5 +176,57 @@ class TicketSecurityTest extends TestCase
             ->assertJson([
                 'message' => 'Por seguridad, no puedes desactivar tu propia cuenta de administrador.',
             ]);
+    }
+
+    public function test_created_ticket_gets_unique_code_derived_from_id(): void
+    {
+        $payload = [
+            'title' => 'Monitor sin señal',
+            'description' => 'El monitor secundario no recibe señal desde ayer.',
+            'category' => 'hardware',
+            'priority' => 'baja',
+        ];
+
+        $first = $this->actingAs($this->user1, 'sanctum')->postJson('/api/tickets', $payload);
+        $second = $this->actingAs($this->user1, 'sanctum')->postJson('/api/tickets', $payload);
+
+        $first->assertStatus(201);
+        $second->assertStatus(201);
+
+        $ticket = $first->json('ticket');
+        $this->assertSame(sprintf('TCK-%s-%04d', date('Y'), $ticket['id']), $ticket['ticket_code']);
+        $this->assertNotSame($ticket['ticket_code'], $second->json('ticket.ticket_code'));
+    }
+
+    public function test_ticket_cannot_be_assigned_to_a_regular_user(): void
+    {
+        $response = $this->actingAs($this->operator, 'sanctum')
+            ->putJson("/api/tickets/{$this->ticketUser2->id}", [
+                'assigned_to' => $this->user1->id,
+            ]);
+
+        $response->assertStatus(422)->assertJsonValidationErrors('assigned_to');
+        $this->assertNull($this->ticketUser2->refresh()->assigned_to);
+    }
+
+    public function test_deactivated_user_with_existing_token_is_blocked(): void
+    {
+        $token = $this->user1->createToken('auth-token')->plainTextToken;
+
+        $this->actingAs($this->admin, 'sanctum')
+            ->putJson("/api/admin/users/{$this->user1->id}", ['is_active' => false])
+            ->assertStatus(200);
+
+        // La desactivación revoca todos los tokens del usuario
+        $this->assertSame(0, $this->user1->tokens()->count());
+
+        // Aunque conserve una sesión previa, no puede seguir operando
+        $this->app['auth']->forgetGuards();
+        $this->actingAs($this->user1->refresh(), 'sanctum')
+            ->getJson('/api/tickets')
+            ->assertStatus(403);
+
+        $this->app['auth']->forgetGuards();
+        $this->withToken($token)->getJson('/api/user')->assertStatus(401);
     }
 }
