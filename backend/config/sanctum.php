@@ -50,7 +50,8 @@ return [
     |
     */
 
-    'expiration' => null,
+    // Los tokens de la API expiran tras 8 horas por defecto (jornada laboral)
+    'expiration' => env('SANCTUM_EXPIRATION', 480),
 
     /*
     |--------------------------------------------------------------------------

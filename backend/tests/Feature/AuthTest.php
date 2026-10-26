@@ -166,4 +166,34 @@ class AuthTest extends TestCase
 
         $response->assertStatus(429);
     }
+
+    public function test_login_is_throttled_per_ip_across_different_emails(): void
+    {
+        // 20 intentos con correos distintos no activan el bloqueo por email, pero sí el de IP
+        for ($i = 0; $i < 20; $i++) {
+            $this->postJson('/api/login', [
+                'email' => "spray{$i}@soporte.local",
+                'password' => 'Password123',
+            ])->assertStatus(422);
+        }
+
+        $this->postJson('/api/login', [
+            'email' => 'spray-final@soporte.local',
+            'password' => 'Password123',
+        ])->assertStatus(429);
+    }
+
+    public function test_expired_token_is_rejected(): void
+    {
+        $role = Role::where('name', 'usuario')->first();
+        $user = User::factory()->create(['role_id' => $role->id, 'is_active' => true]);
+        $token = $user->createToken('auth-token')->plainTextToken;
+
+        $this->withToken($token)->getJson('/api/user')->assertStatus(200);
+
+        $this->travel(config('sanctum.expiration') + 1)->minutes();
+        $this->app['auth']->forgetGuards();
+
+        $this->withToken($token)->getJson('/api/user')->assertStatus(401);
+    }
 }

@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 // 1. Autenticación Pública
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
 
 // 2. Rutas Protegidas (Requieren autenticación y cuenta activa)
 Route::middleware(['auth:sanctum', 'active'])->group(function () {
