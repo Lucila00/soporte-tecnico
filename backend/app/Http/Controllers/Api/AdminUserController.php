@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreUserRequest;
 use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Models\AuditLog;
 use App\Models\Role;
@@ -34,6 +35,43 @@ class AdminUserController extends Controller
         $users = $query->orderBy('id', 'asc')->paginate(15);
 
         return response()->json($users);
+    }
+
+    /**
+     * Crear un usuario con el rol indicado (Solo Admin).
+     */
+    public function store(StoreUserRequest $request): JsonResponse
+    {
+        $validated = $request->validated();
+
+        // La contraseña se guarda hasheada mediante el cast 'hashed' del modelo
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => $validated['password'],
+            'role_id' => $validated['role_id'],
+            'is_active' => $validated['is_active'] ?? true,
+        ]);
+
+        $user->load('role');
+
+        AuditLog::create([
+            'user_id' => $request->user()->id,
+            'action' => 'USER_CREATED',
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'details' => [
+                'target_user_id' => $user->id,
+                'target_email' => $user->email,
+                'role' => $user->role->name,
+            ],
+            'created_at' => now(),
+        ]);
+
+        return response()->json([
+            'message' => 'Usuario creado correctamente.',
+            'user' => $user,
+        ], 201);
     }
 
     /**

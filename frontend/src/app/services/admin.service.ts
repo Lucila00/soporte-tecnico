@@ -22,6 +22,17 @@ export class AdminService {
     return this.http.get<any>(`${this.apiUrl}/users`, { params });
   }
 
+  createUser(data: {
+    name: string;
+    email: string;
+    password: string;
+    password_confirmation: string;
+    role_id: number;
+    is_active?: boolean;
+  }): Observable<{ message: string; user: User }> {
+    return this.http.post<{ message: string; user: User }>(`${this.apiUrl}/users`, data);
+  }
+
   updateUser(id: number, data: { name?: string; role_id?: number; is_active?: boolean }): Observable<{ message: string; user: User }> {
     return this.http.put<{ message: string; user: User }>(`${this.apiUrl}/users/${id}`, data);
   }
