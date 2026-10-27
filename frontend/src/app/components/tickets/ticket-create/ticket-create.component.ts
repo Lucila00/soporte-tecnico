@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -6,6 +6,8 @@ import { TicketService } from '../../../services/ticket.service';
 
 @Component({
   selector: 'app-ticket-create',
+  // Angular 22 usa OnPush por defecto; el estado se guarda en propiedades simples
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
