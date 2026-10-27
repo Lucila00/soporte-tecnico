@@ -41,6 +41,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     // Módulo Administrativo (Exclusivo Administrador)
     Route::middleware('role:administrador')->prefix('admin')->group(function () {
         Route::get('/users', [AdminUserController::class, 'index']);
+        Route::post('/users', [AdminUserController::class, 'store']);
         Route::put('/users/{user}', [AdminUserController::class, 'update']);
         Route::get('/roles', [AdminUserController::class, 'roles']);
         Route::get('/audit-logs', [AdminUserController::class, 'auditLogs']);
