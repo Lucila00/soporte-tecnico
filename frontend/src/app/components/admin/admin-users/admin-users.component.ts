@@ -76,7 +76,7 @@ import { Role, User } from '../../../models/user.model';
                 <label class="form-label" for="new-role">Rol *</label>
                 <select id="new-role" [(ngModel)]="newUser.role_id" name="role_id" required class="form-select">
                   <option [ngValue]="null" disabled>Seleccione un rol</option>
-                  @for (r of roles; track r.id) {
+                  @for (r of assignableRoles; track r.id) {
                     <option [ngValue]="r.id">{{ r.name }}</option>
                   }
                 </select>
@@ -151,7 +151,8 @@ import { Role, User } from '../../../models/user.model';
                     <td><strong>{{ u.name }}</strong></td>
                     <td>{{ u.email }}</td>
                     <td>
-                      @if (isSelf(u.id)) {
+                      <!-- El rol de un administrador no se modifica desde aquí -->
+                      @if (isSelf(u.id) || u.role?.name === 'administrador') {
                         <span class="badge badge-admin">{{ u.role?.name }}</span>
                       } @else {
                         <select
@@ -160,7 +161,7 @@ import { Role, User } from '../../../models/user.model';
                           class="form-select form-select-sm"
                           style="width: 140px; display: inline-block;"
                         >
-                          @for (r of roles; track r.id) {
+                          @for (r of assignableRoles; track r.id) {
                             <option [value]="r.id">{{ r.name }}</option>
                           }
                         </select>
@@ -246,6 +247,11 @@ export class AdminUsersComponent implements OnInit {
   ngOnInit(): void {
     this.loadRoles();
     this.loadUsers();
+  }
+
+  // Roles que se pueden asignar desde el panel: todos menos administrador
+  get assignableRoles(): Role[] {
+    return this.roles.filter((r) => r.name !== 'administrador');
   }
 
   isSelf(userId: number): boolean {

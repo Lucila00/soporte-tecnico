@@ -36,9 +36,9 @@ class AdminUserTest extends TestCase
         ], $overrides);
     }
 
-    public function test_admin_can_create_user_with_any_role(): void
+    public function test_admin_can_create_users_and_operators(): void
     {
-        foreach (['usuario', 'operador', 'administrador'] as $i => $roleName) {
+        foreach (['usuario', 'operador'] as $i => $roleName) {
             $response = $this->actingAs($this->admin, 'sanctum')->postJson('/api/admin/users', $this->payload([
                 'email' => "nuevo{$i}@soporte.local",
                 'role_id' => Role::where('name', $roleName)->value('id'),
@@ -89,5 +89,50 @@ class AdminUserTest extends TestCase
 
         $response->assertStatus(403);
         $this->assertDatabaseMissing('users', ['email' => 'nuevo.tecnico@soporte.local']);
+    }
+
+    public function test_admin_cannot_create_another_administrator(): void
+    {
+        $response = $this->actingAs($this->admin, 'sanctum')->postJson('/api/admin/users', $this->payload([
+            'role_id' => Role::where('name', 'administrador')->value('id'),
+        ]));
+
+        $response->assertStatus(422)->assertJsonValidationErrors('role_id');
+        $this->assertDatabaseMissing('users', ['email' => 'nuevo.tecnico@soporte.local']);
+    }
+
+    public function test_admin_cannot_promote_a_user_to_administrator(): void
+    {
+        $response = $this->actingAs($this->admin, 'sanctum')->putJson("/api/admin/users/{$this->operator->id}", [
+            'role_id' => Role::where('name', 'administrador')->value('id'),
+        ]);
+
+        $response->assertStatus(422)->assertJsonValidationErrors('role_id');
+        $this->assertFalse($this->operator->refresh()->isAdmin());
+    }
+
+    public function test_admin_cannot_change_the_role_of_another_administrator(): void
+    {
+        $otherAdmin = User::factory()->create([
+            'role_id' => Role::where('name', 'administrador')->value('id'),
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($this->admin, 'sanctum')->putJson("/api/admin/users/{$otherAdmin->id}", [
+            'role_id' => Role::where('name', 'usuario')->value('id'),
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJson(['message' => 'No se puede modificar el rol de un usuario administrador.']);
+        $this->assertTrue($otherAdmin->refresh()->isAdmin());
+    }
+
+    public function test_admin_can_still_change_role_between_user_and_operator(): void
+    {
+        $response = $this->actingAs($this->admin, 'sanctum')->putJson("/api/admin/users/{$this->operator->id}", [
+            'role_id' => Role::where('name', 'usuario')->value('id'),
+        ]);
+
+        $response->assertStatus(200)->assertJsonPath('user.role.name', 'usuario');
     }
 }
