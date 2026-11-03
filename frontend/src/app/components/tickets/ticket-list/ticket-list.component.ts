@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -8,6 +8,8 @@ import { PaginatedTickets, Ticket } from '../../../models/ticket.model';
 
 @Component({
   selector: 'app-ticket-list',
+  // Angular 22 usa OnPush por defecto; el estado se guarda en propiedades simples
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, DatePipe],
   template: `

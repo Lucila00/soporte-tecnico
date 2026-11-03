@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -7,6 +7,8 @@ import { DashboardSummary } from '../../models/dashboard.model';
 
 @Component({
   selector: 'app-dashboard',
+  // Angular 22 usa OnPush por defecto; el estado se guarda en propiedades simples
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true,
   imports: [CommonModule, RouterLink, DatePipe],
   template: `
