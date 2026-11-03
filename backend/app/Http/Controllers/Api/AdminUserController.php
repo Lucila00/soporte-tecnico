@@ -95,6 +95,13 @@ class AdminUserController extends Controller
             ], 422);
         }
 
+        // 3. El rol de otro administrador no se puede modificar
+        if ($user->id !== $currentUser->id && $user->isAdmin() && $request->has('role_id') && (int)$request->input('role_id') !== $user->role_id) {
+            return response()->json([
+                'message' => 'No se puede modificar el rol de un usuario administrador.',
+            ], 422);
+        }
+
         $oldRoleId = $user->role_id;
         $oldIsActive = $user->is_active;
 

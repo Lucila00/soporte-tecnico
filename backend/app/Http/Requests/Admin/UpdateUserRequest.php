@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateUserRequest extends FormRequest
 {
@@ -15,7 +16,12 @@ class UpdateUserRequest extends FormRequest
     {
         return [
             'name' => ['sometimes', 'required', 'string', 'max:100'],
-            'role_id' => ['sometimes', 'required', 'exists:roles,id'],
+            'role_id' => [
+                'sometimes',
+                'required',
+                // No se puede ascender a nadie a administrador desde el panel de usuarios
+                Rule::exists('roles', 'id')->where(fn ($q) => $q->where('name', '!=', 'administrador')),
+            ],
             'is_active' => ['sometimes', 'required', 'boolean'],
         ];
     }
@@ -23,7 +29,7 @@ class UpdateUserRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'role_id.exists' => 'El rol seleccionado no es válido.',
+            'role_id.exists' => 'El rol seleccionado no es válido. No se puede asignar el rol administrador.',
             'is_active.boolean' => 'El estado de la cuenta debe ser activo o inactivo.',
         ];
     }

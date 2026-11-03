@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreUserRequest extends FormRequest
 {
@@ -17,7 +18,11 @@ class StoreUserRequest extends FormRequest
             'name' => ['required', 'string', 'max:100'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'role_id' => ['required', 'exists:roles,id'],
+            'role_id' => [
+                'required',
+                // No se puede asignar el rol administrador desde el panel de usuarios
+                Rule::exists('roles', 'id')->where(fn ($q) => $q->where('name', '!=', 'administrador')),
+            ],
             'is_active' => ['sometimes', 'boolean'],
         ];
     }
@@ -33,7 +38,7 @@ class StoreUserRequest extends FormRequest
             'password.min' => 'La contraseña debe tener al menos 8 caracteres.',
             'password.confirmed' => 'La confirmación de la contraseña no coincide.',
             'role_id.required' => 'Debe seleccionar un rol.',
-            'role_id.exists' => 'El rol seleccionado no es válido.',
+            'role_id.exists' => 'El rol seleccionado no es válido. No se pueden crear usuarios con rol administrador.',
         ];
     }
 }
